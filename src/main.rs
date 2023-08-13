@@ -91,7 +91,7 @@ fn main() {
     match &cli.command {
         Some(Commands::Configure { substrate_dir }) => {
             println!("\n[Hookpoint CLI] Initiating the configuration wizard...");
-            println!("\nTip: Use Ctrl+C at any time to terminate or make manual adjustments to `hookpoints.json`.");
+            println!("\nTip: Use Ctrl+C at any time to terminate or make manual adjustments to `hookpoints.json`.\n");
 
             let definition_result = environment::load_definitions(substrate_dir);
             let pallets = environment::get_pallets(substrate_dir).expect("Unable to fetch pallets from substrate directory");
