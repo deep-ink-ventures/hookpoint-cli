@@ -64,16 +64,29 @@ scale-info = {{ version = "{}", default-features = false, features = ["derive"],
 }
 
 
-/// Generates the TOML configuration for the main ink! contract boilerplate.
+/// Generates the TOML configuration for the main ink! contract.
 ///
 /// # Arguments
 /// * `definitions` - The contract definitions derived from the configuration.
+/// * `include_tests` - Boolean indicating whether to include the e2e-tests feature.
 ///
 /// # Returns
 /// Returns a Result containing the formatted TOML configuration string or a toml::de::Error.
-pub fn generate_contract_boilerplate_toml(definitions: &Definitions) -> Result<String, toml::de::Error> {
+pub fn generate_contract_toml(definitions: &Definitions, include_tests: bool) -> Result<String, toml::de::Error> {
     let ink_deps = &definitions.ink_dependencies;
     let name_kebab = camel_case_to_kebab(&definitions.name);
+
+    let dev_dependencies = match include_tests {
+        true => format!(r#"
+[dev-dependencies]
+ink_e2e = "{}"
+"#, ink_deps.ink_version),
+        false => String::new()
+    };
+    let e2e_feature = match include_tests {
+        true => String::from("e2e-tests = []\n"),
+        false => String::new()
+    };
 
     let toml_string = format!(
         r#"[package]
@@ -84,10 +97,7 @@ authors = ["add your name here"]
 
 {}
 {}-contract-trait = {{ package = "{}-contract-trait", default-features = false, path = "../{}-contract-trait" }}
-
-[dev-dependencies]
-ink_e2e = "{}"
-
+{}
 [lib]
 path = "lib.rs"
 
@@ -100,10 +110,9 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-e2e-tests = []
-
+{}
 [workspace]
-"#, name_kebab, generate_dependencies_toml(&definitions, true), name_kebab, name_kebab, name_kebab, ink_deps.ink_version);
+"#, name_kebab, generate_dependencies_toml(&definitions, true), name_kebab, name_kebab, name_kebab, dev_dependencies, e2e_feature);
 
     // Validate the TOML
     let parsed: Result<toml::Value, Error> = toml::from_str(&toml_string);
@@ -120,7 +129,7 @@ e2e-tests = []
 ///
 /// # Returns
 /// Returns a Result containing the formatted TOML configuration string or a toml::de::Error.
-pub fn generate_contract_trait_toml(definitions: &Definitions) -> Result<String, toml::de::Error> {
+pub fn generate_contract_trait_toml(definitions: &Definitions) -> Result<String, Error> {
     let name_kebab = camel_case_to_kebab(&definitions.name);
 
     let toml_string = format!(
@@ -388,13 +397,33 @@ fn generate_test_function(func: &PalletFunction, contract_name: &str) -> String 
 ///
 /// # Arguments
 /// * `definitions` - The contract definitions derived from the configuration.
+/// * `include_tests` - A boolean indicating whether to generate test boilerplate.
 ///
 /// # Returns
 /// Returns a formatted string representing the complete boilerplate for the ink! contract.
-pub fn generate_ink_boilerplate_contract(definitions: &Definitions) -> String {
+pub fn generate_ink_contract(definitions: &Definitions, include_tests: bool) -> String {
     let functions = generate_contract_functions(definitions);
     let contract_name = &definitions.name;
     let contract_name_lower = camel_to_snake(contract_name);
+
+    // Conditionally generate the test boilerplate
+    let test_boilerplate = if include_tests {
+        format!(
+            r##"
+    #[cfg(test)]
+    mod tests {{
+        use super::*;
+        use {contract_name_lower}_contract_trait::{contract_name} as Trait;
+        {ink_test_functions}
+    }}
+"##,
+            contract_name_lower = contract_name_lower,
+            contract_name = contract_name,
+            ink_test_functions = generate_ink_test_functions(&definitions)
+        )
+    } else {
+        String::new()
+    };
 
     format!(
         r##"#![cfg_attr(not(feature = "std"), no_std, no_main)]
@@ -414,17 +443,11 @@ mod {contract_name_lower} {{
     impl {contract_name_lower}_contract_trait::{contract_name} for {contract_name} {{
 {functions}
     }}
-
-    #[cfg(test)]
-    mod tests {{
-        use super::*;
-        use {contract_name_lower}_contract_trait::{contract_name} as Trait;
-        {ink_test_functions}
-    }}
+{test_boilerplate}
 }}"##,
         contract_name = contract_name,
         contract_name_lower = contract_name_lower,
         functions = functions,
-        ink_test_functions = generate_ink_test_functions(&definitions)
+        test_boilerplate = test_boilerplate
     )
 }

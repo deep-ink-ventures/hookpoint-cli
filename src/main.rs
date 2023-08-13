@@ -46,7 +46,7 @@ use ctrlc;
 
 use config::models::Definitions;
 use builder::hooks::create_hooks;
-use crate::builder::contracts::{generate_contract_boilerplate_toml, generate_contract_trait_toml, generate_ink_boilerplate_contract, generate_ink_trait};
+use crate::builder::contracts::{generate_contract_toml, generate_contract_trait_toml, generate_ink_contract, generate_ink_trait};
 use crate::environment::get_substrate_dir;
 use crate::utils::camel_case_to_kebab;
 
@@ -155,19 +155,21 @@ fn main() {
                 fs::create_dir_all(&test_path).expect("Test folder creation failed");
             }
 
-            let boilerplate_toml = generate_contract_boilerplate_toml(&definitions).expect("TOML generation for boilerplate failed");
+            let boilerplate_toml = generate_contract_toml(&definitions, true).expect("TOML generation for boilerplate failed");
             let mut boilerplate_toml_file = fs::File::create(path.join("Cargo.toml")).expect("TOML file creation for boilerplate failed");
             boilerplate_toml_file.write_all(boilerplate_toml.as_bytes()).expect("TOML file write for boilerplate failed");
 
+            let test_toml = generate_contract_toml(&definitions, false).expect("Test TOML generation failed");
             let mut test_toml_file = fs::File::create(test_path.join("Cargo.toml")).expect("Test TOML file creation failed");
-            test_toml_file.write_all(boilerplate_toml.as_bytes()).expect("Test TOML file write failed");
+            test_toml_file.write_all(test_toml.as_bytes()).expect("Test TOML file write failed");
 
-            let contract_content = generate_ink_boilerplate_contract(&definitions);
+            let contract_content = generate_ink_contract(&definitions, true);
             let mut lib_file = fs::File::create(path.join("lib.rs")).expect("lib.rs file creation for boilerplate failed");
             lib_file.write_all(contract_content.as_bytes()).expect("lib.rs file write for boilerplate failed");
 
+            let test_contract_content = generate_ink_contract(&definitions, false);
             let mut test_lib_file = fs::File::create(test_path.join("lib.rs")).expect("Test lib.rs file creation failed");
-            test_lib_file.write_all(contract_content.as_bytes()).expect("Test lib.rs file write failed");
+            test_lib_file.write_all(test_contract_content.as_bytes()).expect("Test lib.rs file write failed");
         }
 
         None => ()

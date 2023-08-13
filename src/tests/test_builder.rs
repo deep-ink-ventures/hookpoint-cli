@@ -15,7 +15,7 @@
 use std::collections::HashMap;
 use crate::builder::hooks::create_hooks;
 use crate::builder::mapper::{ink_to_substrate};
-use crate::builder::contracts::{generate_contract_boilerplate_toml, generate_contract_trait_toml, generate_ink_boilerplate_contract, generate_ink_trait};
+use crate::builder::contracts::{generate_contract_toml, generate_contract_trait_toml, generate_ink_contract, generate_ink_trait};
 use crate::config::models::{Definitions, FunctionArgument, InkDependencies, PalletFunction, ReturnValue};
 
 #[test]
@@ -384,7 +384,7 @@ fn test_generate_contract_boilerplate_toml() {
         ink_dependencies: InkDependencies::default(),
     };
 
-    let output = generate_contract_boilerplate_toml(&definitions);
+    let output = generate_contract_toml(&definitions, true);
     let ink_deps = &definitions.ink_dependencies;
 
     let expected_output = format!(r#"[package]
@@ -421,14 +421,54 @@ e2e-tests = []
 [workspace]
 "#, ink_deps.ink_version, ink_deps.ink_primitives_version, ink_deps.scale_version, ink_deps.scale_info_version, ink_deps.ink_version);
 
-
     assert_eq!(output.unwrap(), expected_output);
 }
 
 #[test]
-fn test_generate_ink_boilerplate_contract() {
-    let mut pallets: HashMap<String, Vec<PalletFunction>> = HashMap::new();
+fn test_generate_contract_toml_without_tests() {
+    let definitions = Definitions {
+        name: "GenesisDao".to_string(),
+        pallets: std::collections::HashMap::new(),
+        ink_dependencies: InkDependencies::default(),
+    };
 
+    let output = generate_contract_toml(&definitions, false);
+    let ink_deps = &definitions.ink_dependencies;
+
+    let expected_output = format!(r#"[package]
+name = "genesis-dao-contract"
+version = "0.1.0"
+edition = "2021"
+authors = ["add your name here"]
+
+[dependencies]
+ink = {{ version = "{}", default-features = false }}
+ink_prelude = {{ version = "{}", default-features = false }}
+scale = {{ package = "parity-scale-codec", version = "{}", default-features = false, features = ["derive"] }}
+scale-info = {{ version = "{}", default-features = false, features = ["derive"], optional = true }}
+
+genesis-dao-contract-trait = {{ package = "genesis-dao-contract-trait", default-features = false, path = "../genesis-dao-contract-trait" }}
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "ink_prelude/std",
+    "scale/std",
+    "scale-info/std",
+]
+ink-as-dependency = []
+
+[workspace]
+"#, ink_deps.ink_version, ink_deps.ink_primitives_version, ink_deps.scale_version, ink_deps.scale_info_version);
+
+    assert_eq!(output.unwrap(), expected_output);
+}
+
+fn generate_boilerplate_for_testing() -> HashMap<String, Vec<PalletFunction>> {
     // Defining pallet functions based on the given scenarios
     let func_no_args_no_return = PalletFunction {
         hook_point: "func_a".to_string(),
@@ -522,6 +562,7 @@ fn test_generate_ink_boilerplate_contract() {
         }),
     };
 
+    let mut pallets: HashMap<String, Vec<PalletFunction>> = HashMap::new();
     pallets.insert("sample_pallet".to_string(), vec![
         func_no_args_no_return,
         func_account_id_return,
@@ -531,13 +572,21 @@ fn test_generate_ink_boilerplate_contract() {
         func_account_id_default_return
     ]);
 
+    pallets
+}
+
+
+
+#[test]
+fn test_generate_ink_boilerplate_contract() {
+    let pallets = generate_boilerplate_for_testing();
     let definitions = Definitions {
         name: "SampleContract".to_string(),
         ink_dependencies: InkDependencies::default(),
         pallets,
     };
 
-    let boilerplate_contract = generate_ink_boilerplate_contract(&definitions);
+    let boilerplate_contract = generate_ink_contract(&definitions, true);
 
     // Check for the correct module name
     assert!(boilerplate_contract.contains("mod sample_contract {"));
@@ -547,7 +596,6 @@ fn test_generate_ink_boilerplate_contract() {
 
     // Check for the correct trait implementation
     assert!(boilerplate_contract.contains("impl sample_contract_contract_trait::SampleContract for SampleContract {"));
-
 
     // Assertions to ensure the presence of the entire function bodies
     assert!(boilerplate_contract.contains(r"fn func_a(&self) {
@@ -607,3 +655,20 @@ fn test_generate_ink_boilerplate_contract() {
             assert_eq!(sample_contract.func_e(AccountId::from([0x01; 32]), Hash::default(), 0), AccountId::from([0x01; 32]));
         }"));
 }
+
+#[test]
+fn test_generate_ink_boilerplate_contract_without_tests() {
+    let pallets = generate_boilerplate_for_testing();
+    let definitions = Definitions {
+        name: "SampleContract".to_string(),
+        ink_dependencies: InkDependencies::default(),
+        pallets,
+    };
+
+    let boilerplate_contract = generate_ink_contract(&definitions, false);
+
+    // Assertions to ensure the absence of the test functions
+    assert!(!boilerplate_contract.contains(r"#[ink::test]"));
+    assert!(!boilerplate_contract.contains(r"mod tests {"));
+}
+
