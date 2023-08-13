@@ -33,7 +33,7 @@ Configure hookpoints interactively:
 ./hookpoint-cli configure --substrate-dir [YOUR_SUBSTRATE_DIRECTORY]
 ```
 
-This will create a `hookpoint.json` with all the definitions of your hookpoints.
+This will create a `hookpoints.json` with all the definitions of your hookpoints.
 
 > You don't have to give your substrate dir if it's the current directory!
 
