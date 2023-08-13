@@ -8,7 +8,7 @@ license = "Apache-2.0"
 homepage = "https://github.com/deep-ink-ventures/hookpoints-cli"
 repository = "https://github.com/deep-ink-ventures/hookpoints-cli"
 readme = "README.md"
-keywords = ["substrate", "blockchain", "hookpoints", "cli", "ink", "pallet"]
+keywords = ["substrate", "blockchain", "cli", "ink", "pallet"]
 categories = ["command-line-utilities", "development-tools", "blockchain"]
 
 [dependencies]
