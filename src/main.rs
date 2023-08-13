@@ -64,13 +64,16 @@ struct Cli {
 enum Commands {
     /// Command to interactively configure the `hookpoints.json` file.
     Configure {
+        /// Path to the substrate directory, defaults to the current directory.
         #[clap(short, long)]
         substrate_dir: Option<String>,
     },
     /// Command to generate hooks based on the `hookpoints.json` and produce ink! contract boilerplate.
     Generate {
+        /// Path to the substrate directory, defaults to the current directory.
         #[clap(short, long)]
         substrate_dir: Option<String>,
+        /// Path to the `hookpoints.json` configuration file.
         #[clap(short, long)]
         config: Option<String>,
     },
