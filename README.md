@@ -1,6 +1,13 @@
 # Hookpoints CLI
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+&nbsp;
+[![Rust](https://img.shields.io/badge/rust-%23000000.svg?d&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+&nbsp;
+[![Polkadot](https://img.shields.io/badge/Polkadot-%23E6007A.svg?&logo=polkadot&logoColor=white)](https://polkadot.network/)
+
+> **Note**: This CLI tool is an add-on to pallet-hookpoints. Dive deeper at [pallet-hookpoints](https://github.com/deep-ink-ventures/pallet_hookpoints). 
+
 
 The Hookpoints CLI is a powerful tool designed to streamline the integration of hook points in Substrate and ink! smart contracts. With this CLI, developers can effortlessly bridge the gap between blockchain runtime and smart contract development, ensuring a cohesive and efficient workflow.
 
@@ -50,16 +57,6 @@ This will generate three folders under `./contracts/hooks`:
 - an ink! boilerplate contract, batteries included with all callbacks and it's default values, working unit tests & functional e2e tests.
 - an ink! test contract that you can use to test the integration in your substrate code
 - within each pallet that has configured hooks an abstracted-everything-away `hooks.rs` with simple functions to call from within substrate. No bytes-wrestling, no decoding/encoding, no interaction with ink/substrate wiring. It just works.
-
-Of course, here's the markdown from the "Documentation" section onwards:
-
-## Documentation
-
-Dive deeper into the functionalities and modules by exploring the inline documentation available in each source file.
-
-## Contributing
-
-Contributions are warmly welcomed! Check out [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to get involved.
 
 ## License
 
