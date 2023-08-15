@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Provides interactive prompts to help set up a new substrate hookpoint project.
+//! Provides interactive prompts to help set up a new substrate hookpoints project.
 //! This module contains functions that gather project details, such as names,
 //! hook points, argument details, and return types, through user input.
 

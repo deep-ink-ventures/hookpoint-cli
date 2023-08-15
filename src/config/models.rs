@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! # Hookpoint Configuration Models
+//! # Hookpoints Configuration Models
 //!
 //! This module defines the primary data structures and their associated methods
 //! that are used to represent and manipulate the configuration for hookpoints.

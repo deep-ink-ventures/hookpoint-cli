@@ -1,12 +1,12 @@
 [package]
-name = "hookpoint-cli"
-description = "Hookpoint CLI - A CLI for the Hookpoint Pallet"
+name = "hookpoints-cli"
+description = "Hookpoints CLI - A CLI for the Hookpoints Pallet"
 authors = ["Christian Peters <chp@deep-ink.ventures>"]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "Apache-2.0"
-homepage = "https://github.com/deep-ink-ventures/hookpoint-cli"
-repository = "https://github.com/deep-ink-ventures/hookpoint-cli"
+homepage = "https://github.com/deep-ink-ventures/hookpoints-cli"
+repository = "https://github.com/deep-ink-ventures/hookpoints-cli"
 readme = "README.md"
 keywords = ["substrate", "blockchain", "cli", "ink", "pallet"]
 categories = ["command-line-utilities", "development-tools", "blockchain"]

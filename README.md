@@ -1,8 +1,8 @@
-# Hookpoint CLI
+# Hookpoints CLI
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-The Hookpoint CLI is a powerful tool designed to streamline the integration of hook points in Substrate and ink! smart contracts. With this CLI, developers can effortlessly bridge the gap between blockchain runtime and smart contract development, ensuring a cohesive and efficient workflow.
+The Hookpoints CLI is a powerful tool designed to streamline the integration of hook points in Substrate and ink! smart contracts. With this CLI, developers can effortlessly bridge the gap between blockchain runtime and smart contract development, ensuring a cohesive and efficient workflow.
 
 ## Features
 
@@ -10,17 +10,17 @@ The Hookpoint CLI is a powerful tool designed to streamline the integration of h
 - **Automatic Code Generation**: Say goodbye to manual boilerplate! Generate hook code for both Substrate pallets and associated ink! contracts.
 - **Type Mapping**: Provides seamless mapping between ink! and Substrate types, ensuring compatibility and type safety across platforms.
 - **Modularity**: Crafted with extensibility in mind, allowing for easy expansion and compatibility with other tools.
-- **Integrated with Hookpoint Pallet**: The Hookpoint CLI is designed to work seamlessly with the `hookpoint` pallet. Integrate the pallet into your Substrate node to unlock the full potential of the CLI.
+- **Integrated with Hookpoints Pallet**: The Hookpoints CLI is designed to work seamlessly with the `hookpoints` pallet. Integrate the pallet into your Substrate node to unlock the full potential of the CLI.
 - **Dependency on `pallet_contracts`**: Built on top of the robust `pallet_contracts` pallet from Parity.
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone [repository_url] hookpoint-cli
+git clone [repository_url] hookpoints-cli
 
 # Navigate to the directory
-cd hookpoint-cli
+cd hookpoints-cli
 
 # Build the project
 cargo build --release

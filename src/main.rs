@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Hookpoint CLI: A Comprehensive Tool for Substrate Runtimes
+//! Hookpoints CLI: A Comprehensive Tool for Substrate Runtimes
 //!
-//! The Hookpoint CLI is designed to facilitate seamless interactions with Substrate runtimes,
+//! The Hookpoints CLI is designed to facilitate seamless interactions with Substrate runtimes,
 //! enabling developers to configure and generate hookpoints, which are pivotal integration points
 //! within a runtime's lifecycle. By offering an interactive configuration wizard, the CLI empowers
 //! developers to define and manage `hookpoints.json`, which acts as the blueprint for these integration points.
@@ -25,7 +25,7 @@
 //! boilerplate contracts for the ink! smart contract platform. These contracts serve as templates,
 //! simplifying the process of deploying custom logic on-chain.
 
-//! The main entry point for the Hookpoint CLI.
+//! The main entry point for the Hookpoints CLI.
 //!
 //! This application facilitates the configuration of hookpoints, the generation of hooks,
 //! and the establishment of boilerplate contracts for the Substrate runtime.
@@ -83,14 +83,14 @@ enum Commands {
 /// It handles command-line arguments, manages interactive sessions, and coordinates generation tasks.
 fn main() {
     ctrlc::set_handler(move || {
-        println!("\n[Hookpoint CLI] Process terminated gracefully. Thank you for using Hookpoints!");
+        println!("\n[Hookpoints CLI] Process terminated gracefully. Thank you for using Hookpoints!");
     }).expect("Error setting Ctrl-C handler");
 
     let cli = Cli::parse();
 
     match &cli.command {
         Some(Commands::Configure { substrate_dir }) => {
-            println!("\n[Hookpoint CLI] Initiating the configuration wizard...");
+            println!("\n[Hookpoints CLI] Initiating the configuration wizard...");
             println!("\nTip: Use Ctrl+C at any time to terminate or make manual adjustments to `hookpoints.json`.\n");
 
             let definition_result = environment::load_definitions(substrate_dir);
@@ -100,7 +100,7 @@ fn main() {
                 Ok(definitions) => definitions,
                 Err(_) => {
                     let name = interactive::set_name();
-                    println!("\n[Hookpoint CLI] Generating a `hookpoints.json` in your substrate root directory.");
+                    println!("\n[Hookpoints CLI] Generating a `hookpoints.json` in your substrate root directory.");
                     Definitions::new(name, pallets.keys().map(|pallet| (pallet.clone(), Vec::new())).collect())
                 }
             };
@@ -110,7 +110,7 @@ fn main() {
                 let pallet_function = interactive::add_hook();
                 definitions.add_pallet_function(pallet_name, pallet_function);
                 definitions.write_to_file(substrate_dir);
-                println!("\n[Hookpoint CLI] Changes saved. Add another hook or exit with Ctrl+C.");
+                println!("\n[Hookpoints CLI] Changes saved. Add another hook or exit with Ctrl+C.");
             }
         }
 
@@ -125,7 +125,7 @@ fn main() {
                     config_path.to_str().map(|s| s.to_string()).unwrap()
                 }
             };
-            println!("[Hookpoint CLI] Using configuration file at: {}", config_file);
+            println!("[Hookpoints CLI] Using configuration file at: {}", config_file);
             let json_content = fs::read_to_string(config_file).expect("Configuration not found; specify the correct path with -c");
             let definitions: Definitions = serde_json::from_str(&json_content).expect("Failed to interpret JSON definitions");
             let pallets = environment::get_pallets(substrate_dir).expect("Unable to load pallets from substrate directory");

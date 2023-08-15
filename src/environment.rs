@@ -14,7 +14,7 @@
 
 //! Provides utility functions related to the environment setup and configuration.
 //! This module contains functions to get the substrate directory, retrieve pallets,
-//! and load hookpoint definitions from a configuration file.
+//! and load hookpoints definitions from a configuration file.
 
 use std::fs;
 use std::collections::HashMap;
@@ -58,7 +58,7 @@ pub(crate) fn get_pallets<P: AsRef<Path>>(substrate_dir: &Option<P>) -> std::io:
     Ok(dirs)
 }
 
-/// Loads and parses the hookpoint definitions from `hookpoints.json`.
+/// Loads and parses the hookpoints definitions from `hookpoints.json`.
 ///
 /// # Examples
 ///
