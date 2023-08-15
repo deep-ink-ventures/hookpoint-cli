@@ -110,9 +110,7 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-{}
-[workspace]
-"#, name_kebab, generate_dependencies_toml(&definitions, true), name_kebab, name_kebab, name_kebab, dev_dependencies, e2e_feature);
+{}"#, name_kebab, generate_dependencies_toml(&definitions, true), name_kebab, name_kebab, name_kebab, dev_dependencies, e2e_feature);
 
     // Validate the TOML
     let parsed: Result<toml::Value, Error> = toml::from_str(&toml_string);
@@ -150,8 +148,6 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-
-[workspace]
 "#, name_kebab, generate_dependencies_toml(&definitions, false));
 
     // Validate the TOML

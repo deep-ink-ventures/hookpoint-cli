@@ -340,8 +340,6 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-
-[workspace]
 "#, ink_deps.ink_version, ink_deps.scale_version, ink_deps.scale_info_version);
 
     assert_eq!(output, expected_output);
@@ -392,8 +390,6 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-
-[workspace]
 "#, ink_deps.ink_version, ink_deps.ink_version, ink_deps.scale_version, ink_deps.scale_info_version);
 
     assert_eq!(output, expected_output);
@@ -441,8 +437,6 @@ std = [
 ]
 ink-as-dependency = []
 e2e-tests = []
-
-[workspace]
 "#, ink_deps.ink_version, ink_deps.ink_primitives_version, ink_deps.scale_version, ink_deps.scale_info_version, ink_deps.ink_version);
 
     assert_eq!(output.unwrap(), expected_output);
@@ -485,8 +479,6 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-
-[workspace]
 "#, ink_deps.ink_version, ink_deps.ink_primitives_version, ink_deps.scale_version, ink_deps.scale_info_version);
 
     assert_eq!(output.unwrap(), expected_output);
