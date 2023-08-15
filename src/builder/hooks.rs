@@ -45,7 +45,7 @@ fn generate_function_signature(name: &str, arguments: &[(String, String)], retur
         args.insert_str(0, ", ");
     }
 
-    let mut func_sig = format!("pub fn {}<T: Config>(owner: T::AccountId, signer: T::AccountId{})", name, args);
+    let mut func_sig = format!("pub fn {}<T: Config>(owner: T::AccountId, origin: T::AccountId{})", name, args);
     if let Some(r) = returns {
         func_sig.push_str(format!(" -> {}", ink_to_substrate(r.type_.as_str())).as_str());
     }
@@ -67,10 +67,10 @@ fn generate_function_signature(name: &str, arguments: &[(String, String)], retur
 /// Returns a string representing the generated function body.
 fn generate_function_body(name: &str, hook_point: &str, arguments: &[(String, String)], returns: &Option<ReturnValue>) -> String {
    let hp_def = format!(r#"
-   let hp = HP::<T>::create(
+   let hook_point = HP::<T>::create(
 		"{}::{}",
 		owner,
-		signer
+	    origin
 	)"#, name, hook_point);
 
     let mut args = arguments.iter()
@@ -83,8 +83,8 @@ fn generate_function_body(name: &str, hook_point: &str, arguments: &[(String, St
     args.push_str(";");
 
     let execute = match returns {
-        None => String::from("\n\n\tHP::<T>::execute::<()>(hp)"),
-        Some(r) => format!("\n\n\tHP::<T>::execute::<{}>(hp).unwrap_or({})", ink_to_substrate(r.type_.as_str()), r.default)
+        None => String::from("\n\n\tHP::<T>::execute::<()>(hook_point)"),
+        Some(r) => format!("\n\n\tHP::<T>::execute::<{}>(hook_point).unwrap_or({})", ink_to_substrate(r.type_.as_str()), r.default)
     };
 
     format!("{}{}{}", hp_def, args, execute)

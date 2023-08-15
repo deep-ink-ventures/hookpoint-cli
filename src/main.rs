@@ -132,8 +132,16 @@ fn main() {
 
             let hooks = create_hooks(definitions.clone());
             hooks.iter().for_each(|(name, content)| {
-                let mut file = fs::File::create(format!("{}/src/hooks.rs", pallets.get(name).unwrap().display())).expect("File creation failed");
-                file.write_all(content.as_bytes()).expect("File write operation failed");
+                let pallet = pallets.get(name);
+                match pallet {
+                    None => {
+                        println!("[Hookpoints CLI] Pallet {} not found in substrate directory. Skipping...", name);
+                    }
+                    Some(_) => {
+                        let mut file = fs::File::create(format!("{}/src/hooks.rs", pallets.get(name).unwrap().display())).expect("File creation failed");
+                        file.write_all(content.as_bytes()).expect("File write operation failed");
+                    }
+                }
             });
 
             let path = root.join(format!("contracts/hooks/{}-contract-trait", camel_case_to_kebab(&definitions.name)));

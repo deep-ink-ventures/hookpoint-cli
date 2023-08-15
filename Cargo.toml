@@ -2,7 +2,7 @@
 name = "hookpoints-cli"
 description = "Hookpoints CLI - A CLI for the Hookpoints Pallet"
 authors = ["Christian Peters <chp@deep-ink.ventures>"]
-version = "0.3.0"
+version = "0.9.0"
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://github.com/deep-ink-ventures/hookpoints-cli"

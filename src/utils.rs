@@ -46,9 +46,32 @@ pub fn get_default_for_ink_type(type_str: &str) -> String {
     match type_str {
         "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128" | "Balance" => "0".to_string(),
         "Vec<u8>" | "Vec<u32>" | "Vec<u64>" | "Vec<u128>" | "Vec<i8>" | "Vec<i16>" | "Vec<i32>" | "Vec<i64>" | "Vec<i128>" => "vec![]".to_string(),
-        "AccountId" => "AccountId::from([0x01; 32])".to_string(),
+        "AccountId" => "ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice".to_string(),
         "Hash" => "Hash::default()".to_string(),
         _ => panic!("Unknown INK type: {}", type_str),
+    }
+}
+
+/// Retrieves a default value for a given ink! type for e2e tests.
+///
+/// Functionally the same as `get_default_for_ink_type` but with a different default value for `AccountId`.
+///
+/// # Examples
+///
+/// ```
+/// let default_value = get_default_for_ink_e2e_type("u32");
+/// assert_eq!(default_value, "0");
+/// ```
+///
+/// # Panics
+///
+/// This function will panic if provided with an unknown ink! type.
+pub fn get_default_ink_type_for_test(type_str: &str) -> String {
+    match type_str {
+        "Vec<u8>" | "Vec<u32>" | "Vec<u64>" | "Vec<u128>" | "Vec<i8>" | "Vec<i16>" | "Vec<i32>" | "Vec<i64>" | "Vec<i128>"  => {
+            type_str.replace("Vec", "Vec::").replace(">",">::new()")
+        }
+        _ => get_default_for_ink_type(type_str)
     }
 }
 

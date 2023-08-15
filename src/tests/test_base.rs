@@ -153,7 +153,7 @@ fn test_default_for_ink_type() {
     assert_eq!(get_default_for_ink_type("Balance"), "0");
     assert_eq!(get_default_for_ink_type("Vec<u8>"), "vec![]");
     assert_eq!(get_default_for_ink_type("Vec<i128>"), "vec![]");
-    assert_eq!(get_default_for_ink_type("AccountId"), "AccountId::from([0x01; 32])");
+    assert_eq!(get_default_for_ink_type("AccountId"), "ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice");
     assert_eq!(get_default_for_ink_type("Hash"), "Hash::default()");
 }
 

@@ -25,7 +25,7 @@
 
 use toml::de::Error;
 use crate::config::models::{Definitions, PalletFunction};
-use crate::utils::{camel_case_to_kebab, camel_to_snake, get_default_for_ink_type, INK_PRIMITIVES, INK_TYPES};
+use crate::utils::{camel_case_to_kebab, camel_to_snake, get_default_ink_type_for_test, get_default_for_ink_type, INK_PRIMITIVES, INK_TYPES};
 
 /// Generates TOML dependencies for the ink! contract based on the provided contract definitions.
 /// This considers both the default ink! dependencies as well as specialized dependencies based on the
@@ -194,6 +194,16 @@ pub fn generate_ink_trait(definitions: &Definitions) -> String {
         _ => format!("use ink_primitives::{{{}}};\n", ink_primitives.join(", ")),
     };
 
+    let mut vector_type: Vec<&str> = Vec::new();
+    for prelude in INK_TYPES.iter() {
+        if prelude.starts_with("Vec") && definitions.contains_type(&[prelude]) {
+            vector_type.push(prelude);
+        }
+    }
+    if !vector_type.is_empty() {
+        import_string.push_str(&format!("\nuse ink::prelude::vec::Vec;\n"));
+    }
+
     if definitions.contains_type(&["Balance"]) {
         import_string.push_str("\ntype Balance = <ink::env::DefaultEnvironment as ink::env::Environment>::Balance;\n");
     }
@@ -253,7 +263,7 @@ fn generate_trait_function_signature(func: &PalletFunction) -> String {
 ///
 /// # Returns
 /// Returns a formatted string with the generated contract functions.
-fn generate_contract_functions(definitions: &Definitions)-> String {
+fn generate_contract_functions(definitions: &Definitions) -> String {
     let functions: Vec<String> = definitions
         .pallets
         .iter()
@@ -284,13 +294,13 @@ fn generate_function_body(func: &PalletFunction) -> String {
     let args = func
         .arguments
         .iter()
-            .map(|arg| {
-                if func.returns.is_some() && func.returns.as_ref().unwrap().default == arg.name {
-                    format!("{name}: {type_}", name = arg.name, type_ = arg.type_)
-                } else {
-                    format!("_{name}: {type_}", name = arg.name, type_ = arg.type_)
-                }
-            })
+        .map(|arg| {
+            if func.returns.is_some() && func.returns.as_ref().unwrap().default == arg.name {
+                format!("{name}: {type_}", name = arg.name, type_ = arg.type_)
+            } else {
+                format!("_{name}: {type_}", name = arg.name, type_ = arg.type_)
+            }
+        })
         .collect::<Vec<_>>()
         .join(", ");
 
@@ -351,6 +361,68 @@ fn generate_ink_test_functions(definitions: &Definitions) -> String {
     tests.join("\n")
 }
 
+pub fn generate_e2e_test_functions(definitions: &Definitions) -> String {
+    let mut e2e_tests = String::new();
+
+    for (pallet_name, pallet_functions) in &definitions.pallets {
+        for function in pallet_functions {
+            let e2e_function_name = format!("e2e_test_{}", function.hook_point);
+            let ref_type = format!("{}Ref", definitions.name);
+            let snake_case_name = camel_to_snake(&definitions.name);
+
+            let parameters = function.arguments.iter().map(|param| {
+                get_default_ink_type_for_test(&param.type_)
+            }).collect::<Vec<_>>().join(", ");
+
+            let expected_return = if let Some(ret_val) = &function.returns {
+                get_default_ink_type_for_test(&ret_val.type_)
+            } else {
+                "()".to_string()
+            };
+
+            let test_function = format!(r#"
+        #[ink_e2e::test]
+        async fn {e2e_function_name}(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {{
+            let constructor = {ref_type}::new();
+
+            let contract_account_id = client
+                .instantiate("{snake_case_name}", &ink_e2e::alice(), constructor, 0, None)
+                .await
+                .expect("instantiate failed")
+                .account_id;
+
+            let {hook_name} = build_message::<{ref_type}>(contract_account_id.clone())
+                .call(|{definition_name}| {definition_name}.{hook_name}({parameters}));
+
+            let result = client
+                .call_dry_run(&ink_e2e::alice(), &{hook_name}, 0, None)
+                .await;
+
+            if let Some(ret) = &function.returns {{
+                assert_eq!(result.return_value(), {expected_return});
+            }}
+            Ok(())
+        }}
+"#, e2e_function_name = e2e_function_name, ref_type = ref_type, snake_case_name = snake_case_name, hook_name = function.hook_point, definition_name = pallet_name, parameters = parameters, expected_return = expected_return);
+
+            e2e_tests.push_str(&test_function);
+        }
+    }
+
+    let wrapped_e2e_tests = format!(r#"
+    #[cfg(all(test, feature = "e2e-tests"))]
+    mod e2e_tests {{
+        use super::*;
+        use {definition_name_lower}_contract_trait::{definition_name} as Trait;
+        use ink_e2e::build_message;
+        type E2EResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+        {e2e_tests}
+    }}
+"#, definition_name_lower = camel_to_snake(&definitions.name.as_str()), definition_name=definitions.name, e2e_tests = e2e_tests);
+
+    wrapped_e2e_tests
+}
+
 /// Generates a single test function for a given contract function.
 ///
 /// # Arguments
@@ -373,7 +445,7 @@ fn generate_test_function(func: &PalletFunction, contract_name: &str) -> String 
         .collect();
 
     let expected_return = if let Some(ret_val) = &func.returns {
-        get_default_for_ink_type(&ret_val.type_)
+        get_default_ink_type_for_test(&ret_val.type_)
     } else {
         "()".to_string()
     };
@@ -408,7 +480,7 @@ pub fn generate_ink_contract(definitions: &Definitions, include_tests: bool) -> 
 
     // Conditionally generate the test boilerplate
     let test_boilerplate = if include_tests {
-        format!(
+        let mut tests = format!(
             r##"
     #[cfg(test)]
     mod tests {{
@@ -420,7 +492,9 @@ pub fn generate_ink_contract(definitions: &Definitions, include_tests: bool) -> 
             contract_name_lower = contract_name_lower,
             contract_name = contract_name,
             ink_test_functions = generate_ink_test_functions(&definitions)
-        )
+        );
+        tests.push_str(generate_e2e_test_functions(&definitions).as_str());
+        tests
     } else {
         String::new()
     };

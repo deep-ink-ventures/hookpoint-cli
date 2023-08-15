@@ -66,7 +66,7 @@ fn test_create_hooks() {
     assert!(content.contains("use pallet_hookpoints::Pallet as HP;"));
 
     // Verify the function signature
-    assert!(content.contains("pub fn test_hook_point<T: Config>(owner: T::AccountId, signer: T::AccountId, arg1: T::Balance, arg2: T::AccountId) -> T::Balance"));
+    assert!(content.contains("pub fn test_hook_point<T: Config>(owner: T::AccountId, origin: T::AccountId, arg1: T::Balance, arg2: T::AccountId) -> T::Balance"));
 
     // Verify the function body for HP initialization
     assert!(content.contains("HP::<T>::create(\n\t\t\"TestConfig::test_hook_point\","));
@@ -76,7 +76,7 @@ fn test_create_hooks() {
     assert!(content.contains(".add_arg::<T::AccountId>(arg2);"));
 
     // Verify the function body for executing HP
-    assert!(content.contains("HP::<T>::execute::<T::Balance>(hp).unwrap_or(DefaultReturn)"));
+    assert!(content.contains("HP::<T>::execute::<T::Balance>(hook_point).unwrap_or(DefaultReturn)"));
 }
 
 #[test]
@@ -105,13 +105,13 @@ fn test_create_hooks_no_returns_no_args() {
     assert!(content.contains("use pallet_hookpoints::Pallet as HP;"));
 
     // Verify the function signature (no arguments and no return type)
-    assert!(content.contains("pub fn test_hook_point_no_args<T: Config>(owner: T::AccountId, signer: T::AccountId)"));
+    assert!(content.contains("pub fn test_hook_point_no_args<T: Config>(owner: T::AccountId, origin: T::AccountId)"));
 
     // Verify the function body for HP initialization
     assert!(content.contains("HP::<T>::create(\n\t\t\"TestConfig::test_hook_point_no_args\","));
 
     // Verify the function body for executing HP (no return type)
-    assert!(content.contains("HP::<T>::execute::<()>(hp)"));
+    assert!(content.contains("HP::<T>::execute::<()>(hook_point)"));
 }
 
 
@@ -200,6 +200,30 @@ pub trait SampleContract {
 }"##;
 
     assert_eq!(trait_def, expected);
+}
+
+#[test]
+fn test_generate_ink_trait_includes_vec() {
+    let func_with_vec = PalletFunction {
+        hook_point: "func_a".to_string(),
+        arguments: vec![
+            FunctionArgument {
+                name: "vec_arg".to_string(),
+                type_: "Vec<u8>".to_string(),
+            }
+        ],
+        returns: None,
+    };
+
+    let mut pallets = HashMap::new();
+    pallets.insert("sample_pallet".to_string(), vec![func_with_vec.clone()]);
+    let definitions = Definitions {
+        name: "SampleContract".to_string(),
+        ink_dependencies: InkDependencies::default(),
+        pallets: pallets.clone(),
+    };
+    let trait_def = generate_ink_trait(&definitions);
+    assert!(trait_def.contains("use ink::prelude::vec::Vec;"));
 }
 
 #[test]
@@ -541,7 +565,7 @@ fn generate_boilerplate_for_testing() -> HashMap<String, Vec<PalletFunction>> {
     };
 
     let func_account_id_default_return = PalletFunction {
-        hook_point: "func_e".to_string(),
+        hook_point: "func_f".to_string(),
         arguments: vec![
             FunctionArgument {
                 name: "account".to_string(),
@@ -585,8 +609,7 @@ fn test_generate_ink_boilerplate_contract() {
         ink_dependencies: InkDependencies::default(),
         pallets,
     };
-
-    let boilerplate_contract = generate_ink_contract(&definitions, true);
+    let boilerplate_contract = generate_ink_contract(&definitions,  true);
 
     // Check for the correct module name
     assert!(boilerplate_contract.contains("mod sample_contract {"));
@@ -614,11 +637,18 @@ fn test_generate_ink_boilerplate_contract() {
             0
         }"));
 
-    assert!(boilerplate_contract.contains(r"fn func_e(&self, _account: AccountId, _hash_val: Hash, _value: u128) -> AccountId {
-            AccountId::from([0x01; 32])
+    assert!(boilerplate_contract.contains(r"#[ink(message)]
+        fn func_e(&self, _arg1: u64, _arg2: Hash) {
+            // do nothing
+        }"));
+    println!("{}", boilerplate_contract);
+    assert!(boilerplate_contract.contains(r" #[ink(message)]
+        fn func_f(&self, _account: AccountId, _hash_val: Hash, _value: u128) -> AccountId {
+            ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice
         }"));
 
-      // Assertions to ensure the presence of the test functions
+
+    // Assertions to ensure the presence of the test functions
     assert!(boilerplate_contract.contains(r"#[ink::test]
         fn test_func_a_hookpoint() {
             let sample_contract = SampleContract::new();
@@ -628,13 +658,13 @@ fn test_generate_ink_boilerplate_contract() {
     assert!(boilerplate_contract.contains(r"#[ink::test]
         fn test_func_b_hookpoint() {
             let sample_contract = SampleContract::new();
-            assert_eq!(sample_contract.func_b(AccountId::from([0x01; 32]), Hash::default(), 0), AccountId::from([0x01; 32]));
+            assert_eq!(sample_contract.func_b(ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice, Hash::default(), 0), ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice);
         }"));
 
     assert!(boilerplate_contract.contains(r"#[ink::test]
         fn test_func_c_hookpoint() {
             let sample_contract = SampleContract::new();
-            assert_eq!(sample_contract.func_c(0, Hash::default()), vec![]);
+            assert_eq!(sample_contract.func_c(0, Hash::default()), Vec::<u8>::new());
         }"));
 
     assert!(boilerplate_contract.contains(r"#[ink::test]
@@ -643,17 +673,19 @@ fn test_generate_ink_boilerplate_contract() {
             assert_eq!(sample_contract.func_d(), 0);
         }"));
 
-    assert!(boilerplate_contract.contains(r"#[ink::test]
-        fn test_func_e_hookpoint() {
-            let sample_contract = SampleContract::new();
-            assert_eq!(sample_contract.func_e(0, Hash::default()), ());
+    assert!(boilerplate_contract.contains(r"
+        #[ink(message)]
+        fn func_e(&self, _arg1: u64, _arg2: Hash) {
+            // do nothing
         }"));
 
     assert!(boilerplate_contract.contains(r"#[ink::test]
-        fn test_func_e_hookpoint() {
+        fn test_func_f_hookpoint() {
             let sample_contract = SampleContract::new();
-            assert_eq!(sample_contract.func_e(AccountId::from([0x01; 32]), Hash::default(), 0), AccountId::from([0x01; 32]));
+            assert_eq!(sample_contract.func_f(ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice, Hash::default(), 0), ink::env::test::default_accounts::<ink::env::DefaultEnvironment>().alice);
         }"));
+
+    println!("{}", boilerplate_contract);
 }
 
 #[test]
