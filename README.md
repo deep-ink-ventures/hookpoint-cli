@@ -31,6 +31,7 @@ cd hookpoints-cli
 
 # Build the project
 cargo build --release
+```
 
 ## Usage
 
